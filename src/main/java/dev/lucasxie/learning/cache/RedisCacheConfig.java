@@ -3,6 +3,7 @@ package dev.lucasxie.learning.cache;
 import java.time.Duration;
 
 import org.springframework.boot.autoconfigure.cache.CacheProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -16,6 +17,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
 @EnableCaching
+@EnableConfigurationProperties(CacheProperties.class)
 public class RedisCacheConfig {
 
 	@Bean
