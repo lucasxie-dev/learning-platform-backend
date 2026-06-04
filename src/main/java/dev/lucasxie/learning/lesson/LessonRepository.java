@@ -13,6 +13,8 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
 
 	List<Lesson> findByCourseIdAndStatusOrderBySortOrderAscIdAsc(Long courseId, LessonStatus status);
 
+	List<Lesson> findByCourseIdAndStatusOrderBySortOrderAsc(Long courseId, LessonStatus status);
+
 	List<Lesson> findByCourseIdAndIdIn(Long courseId, Collection<Long> ids);
 
 	Optional<Lesson> findByIdAndCourseId(Long id, Long courseId);
@@ -20,6 +22,8 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
 	boolean existsByAudioFileIdOrVideoFileIdOrSubtitleFileId(Long audioFileId, Long videoFileId, Long subtitleFileId);
 
 	long countByCourseId(Long courseId);
+
+	long countByCourseIdAndStatus(Long courseId, LessonStatus status);
 
 	@Query("select max(lesson.sortOrder) from Lesson lesson where lesson.courseId = :courseId")
 	Optional<Integer> findMaxSortOrderByCourseId(Long courseId);

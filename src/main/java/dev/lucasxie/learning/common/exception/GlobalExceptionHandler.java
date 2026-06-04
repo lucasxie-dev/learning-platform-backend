@@ -66,6 +66,8 @@ public class GlobalExceptionHandler {
 		if (ErrorCode.COMMON_FORBIDDEN.name().equals(code)
 			|| ErrorCode.COURSE_ACCESS_DENIED.name().equals(code)
 			|| ErrorCode.LESSON_ACCESS_DENIED.name().equals(code)
+			|| ErrorCode.ENROLLMENT_ACCESS_DENIED.name().equals(code)
+			|| ErrorCode.PROGRESS_ACCESS_DENIED.name().equals(code)
 			|| ErrorCode.FILE_ACCESS_DENIED.name().equals(code)) {
 			return HttpStatus.FORBIDDEN;
 		}
@@ -73,15 +75,14 @@ public class GlobalExceptionHandler {
 		if (ErrorCode.COMMON_NOT_FOUND.name().equals(code)
 			|| ErrorCode.COURSE_NOT_FOUND.name().equals(code)
 			|| ErrorCode.LESSON_NOT_FOUND.name().equals(code)
+			|| ErrorCode.ENROLLMENT_NOT_FOUND.name().equals(code)
 			|| ErrorCode.FILE_NOT_FOUND.name().equals(code)) {
 			return HttpStatus.NOT_FOUND;
 		}
 
-		if (ErrorCode.COMMON_CONFLICT.name().equals(code)) {
-			return HttpStatus.CONFLICT;
-		}
-
-		if (ErrorCode.FILE_IN_USE.name().equals(code)) {
+		if (ErrorCode.COMMON_CONFLICT.name().equals(code)
+			|| ErrorCode.ENROLLMENT_ALREADY_EXISTS.name().equals(code)
+			|| ErrorCode.FILE_IN_USE.name().equals(code)) {
 			return HttpStatus.CONFLICT;
 		}
 
