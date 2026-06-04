@@ -1,0 +1,71 @@
+spring:
+  application:
+    name: ${APP_NAME:learning-platform-backend}
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:127.0.0.1}:${DB_PORT:5432}/${DB_NAME:learning_platform}
+    username: ${DB_USERNAME:learning_user}
+    password: ${DB_PASSWORD:learning_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: ${REDIS_TIMEOUT:2s}
+      repositories:
+        enabled: false
+  cache:
+    type: redis
+    redis:
+      time-to-live: ${CACHE_TTL:10m}
+      cache-null-values: false
+      key-prefix: ${CACHE_KEY_PREFIX:learning-platform:}
+      use-key-prefix: true
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: ${MULTIPART_MAX_FILE_SIZE:100MB}
+      max-request-size: ${MULTIPART_MAX_REQUEST_SIZE:100MB}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${ACTUATOR_ENDPOINTS:health,info,metrics}
+  endpoint:
+    health:
+      show-details: ${ACTUATOR_HEALTH_SHOW_DETAILS:when-authorized}
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:}
+    issuer: ${JWT_ISSUER:learning-platform}
+    access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:30m}
+    refresh-token-ttl: ${JWT_REFRESH_TOKEN_TTL:7d}
+  minio:
+    endpoint: ${MINIO_ENDPOINT:http://127.0.0.1:9000}
+    access-key: ${MINIO_ACCESS_KEY:minioadmin}
+    secret-key: ${MINIO_SECRET_KEY:minioadmin}
+    bucket: ${MINIO_BUCKET:learning-platform}
+    region: ${MINIO_REGION:us-east-1}
+    secure: ${MINIO_SECURE:false}
+  storage:
+    provider: ${STORAGE_PROVIDER:MINIO}
+    public-base-url: ${STORAGE_PUBLIC_BASE_URL:}

@@ -1,0 +1,18 @@
+package dev.lucasxie.learning.common.exception;
+
+public enum ErrorCode {
+
+	COMMON_BAD_REQUEST,
+
+	COMMON_UNAUTHORIZED,
+
+	COMMON_FORBIDDEN,
+
+	COMMON_NOT_FOUND,
+
+	COMMON_CONFLICT,
+
+	COMMON_INTERNAL_ERROR,
+
+	VALIDATION_FAILED
+}
