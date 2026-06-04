@@ -63,11 +63,15 @@ public class GlobalExceptionHandler {
 			return HttpStatus.UNAUTHORIZED;
 		}
 
-		if (ErrorCode.COMMON_FORBIDDEN.name().equals(code) || ErrorCode.COURSE_ACCESS_DENIED.name().equals(code)) {
+		if (ErrorCode.COMMON_FORBIDDEN.name().equals(code)
+			|| ErrorCode.COURSE_ACCESS_DENIED.name().equals(code)
+			|| ErrorCode.LESSON_ACCESS_DENIED.name().equals(code)) {
 			return HttpStatus.FORBIDDEN;
 		}
 
-		if (ErrorCode.COMMON_NOT_FOUND.name().equals(code) || ErrorCode.COURSE_NOT_FOUND.name().equals(code)) {
+		if (ErrorCode.COMMON_NOT_FOUND.name().equals(code)
+			|| ErrorCode.COURSE_NOT_FOUND.name().equals(code)
+			|| ErrorCode.LESSON_NOT_FOUND.name().equals(code)) {
 			return HttpStatus.NOT_FOUND;
 		}
 
