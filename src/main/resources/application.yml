@@ -67,5 +67,9 @@ app:
     region: ${MINIO_REGION:us-east-1}
     secure: ${MINIO_SECURE:false}
   storage:
-    provider: ${STORAGE_PROVIDER:MINIO}
-    public-base-url: ${STORAGE_PUBLIC_BASE_URL:}
+    provider: ${STORAGE_PROVIDER:database}
+    max-file-size-mb: ${STORAGE_MAX_FILE_SIZE_MB:20}
+    public-base-url: ${STORAGE_PUBLIC_BASE_URL:http://localhost:8080}
+  file-access:
+    secret: ${FILE_ACCESS_SECRET:local-file-access-secret-change-me}
+    default-expiration-minutes: ${FILE_ACCESS_DEFAULT_EXPIRATION_MINUTES:10}

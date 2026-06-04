@@ -17,6 +17,8 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
 
 	Optional<Lesson> findByIdAndCourseId(Long id, Long courseId);
 
+	boolean existsByAudioFileIdOrVideoFileIdOrSubtitleFileId(Long audioFileId, Long videoFileId, Long subtitleFileId);
+
 	long countByCourseId(Long courseId);
 
 	@Query("select max(lesson.sortOrder) from Lesson lesson where lesson.courseId = :courseId")

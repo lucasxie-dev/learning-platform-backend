@@ -2,7 +2,8 @@
 
 ## Local Infrastructure
 
-Start PostgreSQL, Redis, and MinIO:
+Start PostgreSQL and Redis. The Docker Compose file also includes MinIO for
+future object-storage work, but file uploads use PostgreSQL by default:
 
 ```bash
 docker compose up -d
@@ -34,6 +35,34 @@ The local development services use non-production credentials defined in `docker
 
 Use a strong random `JWT_SECRET` in production. Do not reuse the local
 development example value.
+
+## File Storage
+
+By default, uploaded files are stored in PostgreSQL for easier local development,
+demo setup, and small files. For production-like deployment or larger media
+files, switch `app.storage.provider` to `minio` or `s3` after adding the
+corresponding provider implementation and credentials.
+
+The protected file content endpoint, `/api/v1/files/{fileId}/content`, requires
+a Bearer token. Native browser media elements such as `img`, `audio`, and
+`video` should use a signed access URL from
+`POST /api/v1/files/{fileId}/access-url`. Signed URLs are short-lived and can be
+used directly as media `src` values without an Authorization header.
+
+Signed file access requires a secret for HMAC SHA-256 token generation. For
+local development, the application has a non-production default. For production,
+set a strong random value:
+
+```bash
+FILE_ACCESS_SECRET=learning-platform-local-file-access-secret-change-me
+```
+
+Do not reuse the local example value in production. You can also tune signed URL
+lifetimes with:
+
+```bash
+FILE_ACCESS_DEFAULT_EXPIRATION_MINUTES=15
+```
 
 ## Optional Local Bootstrap Users
 

@@ -65,13 +65,15 @@ public class GlobalExceptionHandler {
 
 		if (ErrorCode.COMMON_FORBIDDEN.name().equals(code)
 			|| ErrorCode.COURSE_ACCESS_DENIED.name().equals(code)
-			|| ErrorCode.LESSON_ACCESS_DENIED.name().equals(code)) {
+			|| ErrorCode.LESSON_ACCESS_DENIED.name().equals(code)
+			|| ErrorCode.FILE_ACCESS_DENIED.name().equals(code)) {
 			return HttpStatus.FORBIDDEN;
 		}
 
 		if (ErrorCode.COMMON_NOT_FOUND.name().equals(code)
 			|| ErrorCode.COURSE_NOT_FOUND.name().equals(code)
-			|| ErrorCode.LESSON_NOT_FOUND.name().equals(code)) {
+			|| ErrorCode.LESSON_NOT_FOUND.name().equals(code)
+			|| ErrorCode.FILE_NOT_FOUND.name().equals(code)) {
 			return HttpStatus.NOT_FOUND;
 		}
 
@@ -79,7 +81,12 @@ public class GlobalExceptionHandler {
 			return HttpStatus.CONFLICT;
 		}
 
-		if (ErrorCode.COMMON_INTERNAL_ERROR.name().equals(code)) {
+		if (ErrorCode.FILE_IN_USE.name().equals(code)) {
+			return HttpStatus.CONFLICT;
+		}
+
+		if (ErrorCode.COMMON_INTERNAL_ERROR.name().equals(code)
+			|| ErrorCode.STORAGE_ERROR.name().equals(code)) {
 			return HttpStatus.INTERNAL_SERVER_ERROR;
 		}
 
