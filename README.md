@@ -36,6 +36,20 @@ The local development services use non-production credentials defined in `docker
 Use a strong random `JWT_SECRET` in production. Do not reuse the local
 development example value.
 
+## API Documentation
+
+After the application starts locally, open the Swagger UI at:
+
+```text
+http://localhost:8080/swagger-ui/index.html
+```
+
+The raw OpenAPI JSON is available at:
+
+```text
+http://localhost:8080/v3/api-docs
+```
+
 ## File Storage
 
 By default, uploaded files are stored in PostgreSQL for easier local development,
@@ -80,7 +94,7 @@ unchanged in production.
 
 ## Production Notes
 
-SpringDoc exposes `/v3/api-docs` and `/swagger-ui.html` by default. If API
+SpringDoc exposes `/v3/api-docs` and `/swagger-ui/index.html` by default. If API
 documentation should not be publicly available in production, disable it with:
 
 ```yaml
