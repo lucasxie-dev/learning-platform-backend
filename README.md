@@ -35,6 +35,20 @@ The local development services use non-production credentials defined in `docker
 Use a strong random `JWT_SECRET` in production. Do not reuse the local
 development example value.
 
+## Optional Local Bootstrap Users
+
+After Flyway has created the schema and seeded roles/permissions, you can
+create local bootstrap users with:
+
+```bash
+docker compose exec -T postgres psql -U learning_user -d learning_platform < scripts/sql/init-local-users.sql
+```
+
+The script creates `admin@example.com`, `teacher@example.com`, and
+`student@example.com` with the local-only initial password `ChangeMe123!`.
+Change these passwords immediately after first login. Do not run the script
+unchanged in production.
+
 ## Production Notes
 
 SpringDoc exposes `/v3/api-docs` and `/swagger-ui.html` by default. If API

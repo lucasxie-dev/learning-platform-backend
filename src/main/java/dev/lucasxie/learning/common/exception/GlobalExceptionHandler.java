@@ -3,6 +3,7 @@ package dev.lucasxie.learning.common.exception;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,9 +17,10 @@ import jakarta.validation.ConstraintViolationException;
 public class GlobalExceptionHandler {
 
 	@ExceptionHandler(BusinessException.class)
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public ApiResponse<Void> handleBusinessException(BusinessException exception) {
-		return ApiResponse.failure(exception.getCode(), exception.getMessage());
+	public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException exception) {
+		return ResponseEntity
+			.status(resolveStatus(exception.getCode()))
+			.body(ApiResponse.failure(exception.getCode(), exception.getMessage()));
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
@@ -54,5 +56,29 @@ public class GlobalExceptionHandler {
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 	public ApiResponse<Void> handleException(Exception exception) {
 		return ApiResponse.failure(ErrorCode.COMMON_INTERNAL_ERROR.name(), exception.getMessage());
+	}
+
+	private HttpStatus resolveStatus(String code) {
+		if (ErrorCode.COMMON_UNAUTHORIZED.name().equals(code)) {
+			return HttpStatus.UNAUTHORIZED;
+		}
+
+		if (ErrorCode.COMMON_FORBIDDEN.name().equals(code) || ErrorCode.COURSE_ACCESS_DENIED.name().equals(code)) {
+			return HttpStatus.FORBIDDEN;
+		}
+
+		if (ErrorCode.COMMON_NOT_FOUND.name().equals(code) || ErrorCode.COURSE_NOT_FOUND.name().equals(code)) {
+			return HttpStatus.NOT_FOUND;
+		}
+
+		if (ErrorCode.COMMON_CONFLICT.name().equals(code)) {
+			return HttpStatus.CONFLICT;
+		}
+
+		if (ErrorCode.COMMON_INTERNAL_ERROR.name().equals(code)) {
+			return HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return HttpStatus.BAD_REQUEST;
 	}
 }
