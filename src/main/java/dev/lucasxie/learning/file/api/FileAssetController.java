@@ -17,8 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import dev.lucasxie.learning.common.api.ApiResponse;
+import dev.lucasxie.learning.common.api.PageResponse;
 import dev.lucasxie.learning.file.FileAssetType;
+import dev.lucasxie.learning.file.StorageProvider;
 import dev.lucasxie.learning.file.dto.FileAccessUrlResponse;
+import dev.lucasxie.learning.file.dto.FileAssetListItemResponse;
 import dev.lucasxie.learning.file.dto.FileAssetResponse;
 import dev.lucasxie.learning.file.dto.FileUploadResponse;
 import dev.lucasxie.learning.file.service.FileAssetService;
@@ -28,10 +31,36 @@ import dev.lucasxie.learning.file.service.FileDownload;
 @RequestMapping("/api/v1/files")
 public class FileAssetController {
 
+	private static final int MAX_PAGE_SIZE = 100;
+
 	private final FileAssetService fileAssetService;
 
 	public FileAssetController(FileAssetService fileAssetService) {
 		this.fileAssetService = fileAssetService;
+	}
+
+	@GetMapping
+	@PreAuthorize("hasRole('ADMIN') or hasRole('TEACHER')")
+	public ApiResponse<PageResponse<FileAssetListItemResponse>> listFiles(
+		@RequestParam(required = false) String keyword,
+		@RequestParam(required = false) FileAssetType assetType,
+		@RequestParam(required = false) StorageProvider storageProvider,
+		@RequestParam(required = false) String relatedType,
+		@RequestParam(required = false) Long relatedId,
+		@RequestParam(required = false) Boolean bound,
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(defaultValue = "20") int size
+	) {
+		return ApiResponse.success(fileAssetService.listFiles(
+			keyword,
+			assetType,
+			storageProvider,
+			relatedType,
+			relatedId,
+			bound,
+			Math.max(page, 0),
+			normalizeSize(size)
+		));
 	}
 
 	@PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -86,5 +115,9 @@ public class FileAssetController {
 	public ApiResponse<Void> deleteFile(@PathVariable Long fileId) {
 		fileAssetService.deleteFile(fileId);
 		return ApiResponse.success();
+	}
+
+	private int normalizeSize(int size) {
+		return Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
 	}
 }

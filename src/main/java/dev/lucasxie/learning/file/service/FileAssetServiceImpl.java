@@ -3,10 +3,18 @@ package dev.lucasxie.learning.file.service;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import dev.lucasxie.learning.auth.security.AuthenticatedUser;
 import dev.lucasxie.learning.auth.security.SecurityUtils;
+import dev.lucasxie.learning.common.api.PageResponse;
 import dev.lucasxie.learning.common.exception.BusinessException;
 import dev.lucasxie.learning.common.exception.ErrorCode;
 import dev.lucasxie.learning.course.Course;
@@ -26,6 +35,7 @@ import dev.lucasxie.learning.file.FileAssetRepository;
 import dev.lucasxie.learning.file.FileAssetType;
 import dev.lucasxie.learning.file.StorageProvider;
 import dev.lucasxie.learning.file.dto.FileAccessUrlResponse;
+import dev.lucasxie.learning.file.dto.FileAssetListItemResponse;
 import dev.lucasxie.learning.file.dto.FileAssetResponse;
 import dev.lucasxie.learning.file.dto.FileUploadResponse;
 import dev.lucasxie.learning.lesson.Lesson;
@@ -36,9 +46,14 @@ import dev.lucasxie.learning.storage.StorageProperties;
 import dev.lucasxie.learning.storage.StorageService;
 import dev.lucasxie.learning.storage.StorageUploadCommand;
 import dev.lucasxie.learning.storage.StorageUploadResult;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 
 @Service
 public class FileAssetServiceImpl implements FileAssetService {
+
+	private static final int MAX_PAGE_SIZE = 100;
 
 	private static final String RELATED_TYPE_COURSE = "COURSE";
 
@@ -132,6 +147,44 @@ public class FileAssetServiceImpl implements FileAssetService {
 		requireViewAccess(requireCurrentUser(), fileAsset);
 
 		return toResponse(fileAsset);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public PageResponse<FileAssetListItemResponse> listFiles(
+		String keyword,
+		FileAssetType assetType,
+		StorageProvider storageProvider,
+		String relatedType,
+		Long relatedId,
+		Boolean bound,
+		int page,
+		int size
+	) {
+		AuthenticatedUser currentUser = requireCurrentUser();
+		requireAdminOrTeacher(currentUser, "Only admins and teachers can list files globally");
+
+		Pageable pageable = PageRequest.of(
+			Math.max(page, 0),
+			Math.min(Math.max(size, 1), MAX_PAGE_SIZE),
+			Sort.by(Sort.Direction.DESC, "createdAt")
+		);
+		Page<FileAsset> files = fileAssetRepository.findAll(
+			buildFileAssetSpecification(currentUser, keyword, assetType, storageProvider, relatedType, relatedId, bound),
+			pageable
+		);
+		List<FileAssetListItemResponse> items = files.getContent()
+			.stream()
+			.map(this::toListItemResponse)
+			.toList();
+
+		return new PageResponse<>(
+			items,
+			files.getTotalElements(),
+			files.getNumber(),
+			files.getSize(),
+			files.getTotalPages()
+		);
 	}
 
 	@Override
@@ -397,6 +450,14 @@ public class FileAssetServiceImpl implements FileAssetService {
 		throw new BusinessException(ErrorCode.FILE_ACCESS_DENIED, message);
 	}
 
+	private void requireAdminOrTeacher(AuthenticatedUser currentUser, String message) {
+		if (hasRole(currentUser, "ADMIN") || hasRole(currentUser, "TEACHER")) {
+			return;
+		}
+
+		throw new BusinessException(ErrorCode.FILE_ACCESS_DENIED, message);
+	}
+
 	private void requireAssetType(FileAsset fileAsset, FileAssetType requiredAssetType) {
 		if (fileAsset.getAssetType() != requiredAssetType) {
 			throw new BusinessException(ErrorCode.FILE_BINDING_INVALID, "File asset type is not valid for this binding");
@@ -476,6 +537,86 @@ public class FileAssetServiceImpl implements FileAssetService {
 		return authorities.stream().anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(authority));
 	}
 
+	private Specification<FileAsset> buildFileAssetSpecification(
+		AuthenticatedUser currentUser,
+		String keyword,
+		FileAssetType assetType,
+		StorageProvider storageProvider,
+		String relatedType,
+		Long relatedId,
+		Boolean bound
+	) {
+		return (root, query, criteriaBuilder) -> {
+			List<Predicate> predicates = new ArrayList<>();
+
+			if (hasRole(currentUser, "TEACHER") && !hasRole(currentUser, "ADMIN")) {
+				Subquery<Long> courseBindingCourseIds = query.subquery(Long.class);
+				Root<Course> courseRoot = courseBindingCourseIds.from(Course.class);
+				courseBindingCourseIds.select(courseRoot.get("id"))
+					.where(criteriaBuilder.equal(courseRoot.get("ownerId"), currentUser.getId()));
+
+				Subquery<Long> ownedLessonIds = query.subquery(Long.class);
+				Root<Lesson> lessonRoot = ownedLessonIds.from(Lesson.class);
+				Root<Course> lessonCourseRoot = ownedLessonIds.from(Course.class);
+				ownedLessonIds.select(lessonRoot.get("id"))
+					.where(
+						criteriaBuilder.equal(lessonRoot.get("courseId"), lessonCourseRoot.get("id")),
+						criteriaBuilder.equal(lessonCourseRoot.get("ownerId"), currentUser.getId())
+					);
+
+				predicates.add(criteriaBuilder.or(
+					criteriaBuilder.equal(root.get("ownerId"), currentUser.getId()),
+					criteriaBuilder.and(
+						criteriaBuilder.equal(root.get("relatedType"), RELATED_TYPE_COURSE),
+						root.get("relatedId").in(courseBindingCourseIds)
+					),
+					criteriaBuilder.and(
+						criteriaBuilder.equal(root.get("relatedType"), RELATED_TYPE_LESSON),
+						root.get("relatedId").in(ownedLessonIds)
+					)
+				));
+			}
+
+			if (assetType != null) {
+				predicates.add(criteriaBuilder.equal(root.get("assetType"), assetType));
+			}
+
+			if (storageProvider != null) {
+				predicates.add(criteriaBuilder.equal(root.get("storageProvider"), storageProvider));
+			}
+
+			if (StringUtils.hasText(relatedType)) {
+				predicates.add(criteriaBuilder.equal(root.get("relatedType"), relatedType.trim()));
+			}
+
+			if (relatedId != null) {
+				predicates.add(criteriaBuilder.equal(root.get("relatedId"), relatedId));
+			}
+
+			if (bound != null) {
+				predicates.add(Boolean.TRUE.equals(bound)
+					? criteriaBuilder.and(
+						criteriaBuilder.isNotNull(root.get("relatedType")),
+						criteriaBuilder.isNotNull(root.get("relatedId"))
+					)
+					: criteriaBuilder.or(
+						criteriaBuilder.isNull(root.get("relatedType")),
+						criteriaBuilder.isNull(root.get("relatedId"))
+					));
+			}
+
+			if (StringUtils.hasText(keyword)) {
+				String pattern = "%" + keyword.trim().toLowerCase(Locale.ROOT) + "%";
+				predicates.add(criteriaBuilder.or(
+					criteriaBuilder.like(criteriaBuilder.lower(root.get("originalName")), pattern),
+					criteriaBuilder.like(criteriaBuilder.lower(root.get("contentType")), pattern)
+				));
+			}
+
+			return criteriaBuilder.and(predicates.toArray(Predicate[]::new));
+		};
+	}
+
 	private String resolveOriginalName(MultipartFile file) {
 		if (StringUtils.hasText(file.getOriginalFilename())) {
 			return file.getOriginalFilename().trim();
@@ -531,6 +672,25 @@ public class FileAssetServiceImpl implements FileAssetService {
 			fileAsset.getStorageProvider(),
 			fileAsset.getChecksum(),
 			fileAsset.getCreatedAt()
+		);
+	}
+
+	private FileAssetListItemResponse toListItemResponse(FileAsset fileAsset) {
+		return new FileAssetListItemResponse(
+			fileAsset.getId(),
+			fileAsset.getOriginalName(),
+			fileAsset.getUrl(),
+			fileAsset.getContentType(),
+			fileAsset.getSizeBytes(),
+			fileAsset.getAssetType(),
+			fileAsset.getStorageProvider(),
+			fileAsset.getOwnerId(),
+			fileAsset.getRelatedType(),
+			fileAsset.getRelatedId(),
+			fileAsset.getRelatedType() != null && fileAsset.getRelatedId() != null,
+			fileAsset.getChecksum(),
+			fileAsset.getCreatedAt(),
+			fileAsset.getUpdatedAt()
 		);
 	}
 

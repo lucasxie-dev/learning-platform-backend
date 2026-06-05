@@ -11,9 +11,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import dev.lucasxie.learning.common.api.ApiResponse;
+import dev.lucasxie.learning.common.api.PageResponse;
+import dev.lucasxie.learning.lesson.LessonStatus;
+import dev.lucasxie.learning.lesson.dto.GlobalLessonListItemResponse;
 import dev.lucasxie.learning.lesson.dto.LessonCreateRequest;
 import dev.lucasxie.learning.lesson.dto.LessonListItemResponse;
 import dev.lucasxie.learning.lesson.dto.LessonReorderRequest;
@@ -25,6 +29,8 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/v1")
 public class LessonController {
+
+	private static final int MAX_PAGE_SIZE = 100;
 
 	private final LessonService lessonService;
 
@@ -45,6 +51,30 @@ public class LessonController {
 	@PreAuthorize("isAuthenticated()")
 	public ApiResponse<List<LessonListItemResponse>> listLessonsByCourse(@PathVariable Long courseId) {
 		return ApiResponse.success(lessonService.listLessonsByCourse(courseId));
+	}
+
+	@GetMapping("/lessons")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('TEACHER')")
+	public ApiResponse<PageResponse<GlobalLessonListItemResponse>> listLessons(
+		@RequestParam(required = false) String keyword,
+		@RequestParam(required = false) Long courseId,
+		@RequestParam(required = false) LessonStatus status,
+		@RequestParam(required = false) Boolean hasAudio,
+		@RequestParam(required = false) Boolean hasVideo,
+		@RequestParam(required = false) Boolean hasSubtitle,
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(defaultValue = "20") int size
+	) {
+		return ApiResponse.success(lessonService.listLessons(
+			keyword,
+			courseId,
+			status,
+			hasAudio,
+			hasVideo,
+			hasSubtitle,
+			Math.max(page, 0),
+			normalizeSize(size)
+		));
 	}
 
 	@GetMapping("/lessons/{lessonId}")
@@ -89,5 +119,9 @@ public class LessonController {
 	public ApiResponse<Void> deleteLesson(@PathVariable Long lessonId) {
 		lessonService.deleteLesson(lessonId);
 		return ApiResponse.success();
+	}
+
+	private int normalizeSize(int size) {
+		return Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
 	}
 }

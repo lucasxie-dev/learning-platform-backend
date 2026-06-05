@@ -62,6 +62,42 @@ GET /api/v1/settings/overview
 This endpoint requires a Bearer token for any authenticated user. It does not
 expose secrets and does not allow changing runtime configuration.
 
+## Admin Console Lists
+
+The frontend admin console can read global, paged management lists for lessons
+and media assets:
+
+```text
+GET /api/v1/lessons
+GET /api/v1/files
+```
+
+Both endpoints require an ADMIN or TEACHER Bearer token. ADMIN users can list all
+records. TEACHER users can list lessons under courses they own and media assets
+they uploaded or assets attached to their courses/lessons.
+
+Example requests:
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/v1/lessons?page=0&size=20"
+
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/v1/lessons?status=PUBLISHED&page=0&size=20"
+
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/v1/lessons?hasAudio=false&page=0&size=20"
+
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/v1/files?page=0&size=20"
+
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/v1/files?bound=false&page=0&size=20"
+
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/v1/files?assetType=LESSON_AUDIO&page=0&size=20"
+```
+
 ## File Storage
 
 By default, uploaded files are stored in PostgreSQL for easier local development,
