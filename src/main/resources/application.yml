@@ -54,6 +54,9 @@ management:
       show-details: ${ACTUATOR_HEALTH_SHOW_DETAILS:when-authorized}
 
 app:
+  project:
+    backend-repository: ${APP_BACKEND_REPOSITORY:https://github.com/lucasxie-dev/learning-platform-backend}
+    frontend-repository: ${APP_FRONTEND_REPOSITORY:https://github.com/lucasxie-dev/learning-platform-web}
   jwt:
     secret: ${JWT_SECRET:}
     issuer: ${JWT_ISSUER:learning-platform}

@@ -366,6 +366,10 @@ public class FileAssetServiceImpl implements FileAssetService {
 			}
 		}
 
+		if (isReferencedByPublishedLessonMarkdown(fileAsset)) {
+			return;
+		}
+
 		throw new BusinessException(ErrorCode.FILE_ACCESS_DENIED, "You do not have access to this file");
 	}
 
@@ -401,9 +405,46 @@ public class FileAssetServiceImpl implements FileAssetService {
 
 	private void requireNotInUse(FileAsset fileAsset) {
 		if (courseRepository.existsByCoverFileId(fileAsset.getId())
-			|| lessonRepository.existsByAudioFileIdOrVideoFileIdOrSubtitleFileId(fileAsset.getId(), fileAsset.getId(), fileAsset.getId())) {
-			throw new BusinessException(ErrorCode.FILE_IN_USE, "File is still bound to course or lesson media; unbind it before deleting");
+			|| lessonRepository.existsByAudioFileIdOrVideoFileIdOrSubtitleFileId(fileAsset.getId(), fileAsset.getId(), fileAsset.getId())
+			|| isReferencedByAnyLessonMarkdown(fileAsset)) {
+			throw new BusinessException(ErrorCode.FILE_IN_USE, "File is still referenced by course cover, lesson media, or lesson Markdown; remove the reference before deleting");
 		}
+	}
+
+	private boolean isReferencedByPublishedLessonMarkdown(FileAsset fileAsset) {
+		String fileReference = "file:" + fileAsset.getId();
+		return lessonRepository.findByContentMarkdownContaining(fileReference)
+			.stream()
+			.filter(lesson -> containsExactFileReference(lesson.getContentMarkdown(), fileAsset.getId()))
+			.anyMatch(lesson -> {
+				Course course = getExistingCourse(lesson.getCourseId());
+				return course.getStatus() == CourseStatus.PUBLISHED && lesson.getStatus() == LessonStatus.PUBLISHED;
+			});
+	}
+
+	private boolean isReferencedByAnyLessonMarkdown(FileAsset fileAsset) {
+		String fileReference = "file:" + fileAsset.getId();
+		return lessonRepository.findByContentMarkdownContaining(fileReference)
+			.stream()
+			.anyMatch(lesson -> containsExactFileReference(lesson.getContentMarkdown(), fileAsset.getId()));
+	}
+
+	private boolean containsExactFileReference(String contentMarkdown, Long fileId) {
+		if (!StringUtils.hasText(contentMarkdown)) {
+			return false;
+		}
+
+		String fileReference = "file:" + fileId;
+		int index = contentMarkdown.indexOf(fileReference);
+		while (index >= 0) {
+			int endIndex = index + fileReference.length();
+			if (endIndex >= contentMarkdown.length() || !Character.isDigit(contentMarkdown.charAt(endIndex))) {
+				return true;
+			}
+			index = contentMarkdown.indexOf(fileReference, endIndex);
+		}
+
+		return false;
 	}
 
 	private FileAsset getExistingFile(Long fileId) {

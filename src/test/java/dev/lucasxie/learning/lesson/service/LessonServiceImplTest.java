@@ -46,7 +46,7 @@ class LessonServiceImplTest {
 		LessonServiceImpl service = createService(courses.repository(), lessons.repository());
 		authenticate(admin(1L));
 
-		var response = service.createLesson(1L, new LessonCreateRequest("Intro", "Start here", null));
+		var response = service.createLesson(1L, new LessonCreateRequest("Intro", "Start here", null, null));
 
 		assertThat(response.courseId()).isEqualTo(1L);
 		assertThat(response.status()).isEqualTo(LessonStatus.DRAFT);
@@ -61,7 +61,7 @@ class LessonServiceImplTest {
 		LessonServiceImpl service = createService(courses.repository(), lessons.repository());
 		authenticate(teacher(10L));
 
-		var response = service.createLesson(1L, new LessonCreateRequest("Draft lesson", null, 0));
+		var response = service.createLesson(1L, new LessonCreateRequest("Draft lesson", null, null, 0));
 
 		assertThat(response.courseId()).isEqualTo(1L);
 		assertThat(response.sortOrder()).isZero();
@@ -75,7 +75,7 @@ class LessonServiceImplTest {
 		LessonServiceImpl service = createService(courses.repository(), lessons.repository());
 		authenticate(teacher(10L));
 
-		assertThatThrownBy(() -> service.createLesson(1L, new LessonCreateRequest("Blocked", null, null)))
+		assertThatThrownBy(() -> service.createLesson(1L, new LessonCreateRequest("Blocked", null, null, null)))
 			.isInstanceOf(BusinessException.class)
 			.extracting("code")
 			.isEqualTo(ErrorCode.LESSON_ACCESS_DENIED.name());
@@ -89,7 +89,7 @@ class LessonServiceImplTest {
 		LessonServiceImpl service = createService(courses.repository(), lessons.repository());
 		authenticate(student(20L));
 
-		assertThatThrownBy(() -> service.createLesson(1L, new LessonCreateRequest("Blocked", null, null)))
+		assertThatThrownBy(() -> service.createLesson(1L, new LessonCreateRequest("Blocked", null, null, null)))
 			.isInstanceOf(BusinessException.class)
 			.extracting("code")
 			.isEqualTo(ErrorCode.LESSON_ACCESS_DENIED.name());

@@ -65,6 +65,7 @@ public class LessonServiceImpl implements LessonService {
 		lesson.setCourseId(course.getId());
 		lesson.setTitle(request.title().trim());
 		lesson.setDescription(normalizeOptionalText(request.description()));
+		lesson.setContentMarkdown(normalizeOptionalText(request.contentMarkdown()));
 		lesson.setSortOrder(resolveCreateSortOrder(course.getId(), request.sortOrder()));
 		lesson.setStatus(LessonStatus.DRAFT);
 
@@ -85,6 +86,7 @@ public class LessonServiceImpl implements LessonService {
 
 		lesson.setTitle(request.title().trim());
 		lesson.setDescription(normalizeOptionalText(request.description()));
+		lesson.setContentMarkdown(normalizeOptionalText(request.contentMarkdown()));
 		if (request.sortOrder() != null) {
 			lesson.setSortOrder(request.sortOrder());
 		}

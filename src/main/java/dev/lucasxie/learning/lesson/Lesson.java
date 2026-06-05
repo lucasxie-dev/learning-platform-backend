@@ -33,6 +33,9 @@ public class Lesson extends BaseEntity {
 	@Column(name = "description", columnDefinition = "text")
 	private String description;
 
+	@Column(name = "content_markdown", columnDefinition = "text")
+	private String contentMarkdown;
+
 	@Column(name = "sort_order", nullable = false)
 	private Integer sortOrder;
 

@@ -9,6 +9,7 @@ public record LessonResponse(
 	Long courseId,
 	String title,
 	String description,
+	String contentMarkdown,
 	Integer sortOrder,
 	LessonStatus status,
 	Long audioFileId,

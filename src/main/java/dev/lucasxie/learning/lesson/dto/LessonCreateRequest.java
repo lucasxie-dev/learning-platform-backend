@@ -14,6 +14,9 @@ public record LessonCreateRequest(
 	@Size(max = 10000)
 	String description,
 
+	@Size(max = 100000)
+	String contentMarkdown,
+
 	@Min(0)
 	Integer sortOrder
 ) {

@@ -50,6 +50,18 @@ The raw OpenAPI JSON is available at:
 http://localhost:8080/v3/api-docs
 ```
 
+## Settings Overview
+
+The frontend Settings page can read safe profile, system, and media storage
+metadata from:
+
+```text
+GET /api/v1/settings/overview
+```
+
+This endpoint requires a Bearer token for any authenticated user. It does not
+expose secrets and does not allow changing runtime configuration.
+
 ## File Storage
 
 By default, uploaded files are stored in PostgreSQL for easier local development,

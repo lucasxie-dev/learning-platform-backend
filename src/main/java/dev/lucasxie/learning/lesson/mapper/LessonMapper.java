@@ -15,6 +15,7 @@ public class LessonMapper {
 			lesson.getCourseId(),
 			lesson.getTitle(),
 			lesson.getDescription(),
+			lesson.getContentMarkdown(),
 			lesson.getSortOrder(),
 			lesson.getStatus(),
 			lesson.getAudioFileId(),
